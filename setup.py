@@ -11,5 +11,4 @@ setup(
     packages=["update_geonames"],
     python_requires=">=3.7",
     install_requires=["requests=2.22.0"]
-    license="MIT"
 )
