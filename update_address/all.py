@@ -1,8 +1,6 @@
-from copy import deepcopy
 import logging
 import requests
 import json
-import sys
 from copy import deepcopy
 
 GEONAMES = {}
