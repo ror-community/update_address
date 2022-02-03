@@ -1,1 +1,1 @@
-__all__ = ['update_geonames']
+from .update_geonames import *
