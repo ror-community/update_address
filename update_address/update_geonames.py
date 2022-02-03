@@ -69,8 +69,8 @@ def compare_ror_geoname(mapped_fields,ror_address,geonames_response, original_ad
             elif (value in geonames_response) and (geonames_response[value] != ""):
                     geonames_value = geonames_response[value]
             if str(ror_value) != str(geonames_value):
-                original_address[key] = geonames_value
-    return deepcopy(original_address)
+                ror_address[key] = geonames_value
+    return deepcopy(ror_address)
 
 def get_record_address(record):
     # returns the address dictionary with the geonames city id
