@@ -49,10 +49,9 @@ def get_geonames_response(id):
         msg = "Connection Error"
     return result,msg
 
-def map_type(key):
-    map_types = {"lat": "float", "lng": "float"}
-    return map_types[key]
-    
+def map_type_float():
+    return ["lat", "lng"]
+
 def compare_ror_geoname(mapped_fields,ror_address,geonames_response, original_address):
     for key, value in mapped_fields.items():
         # If value is of dict type then print
@@ -73,8 +72,10 @@ def compare_ror_geoname(mapped_fields,ror_address,geonames_response, original_ad
             elif (value in geonames_response) and (geonames_response[value] != ""):
                     geonames_value = geonames_response[value]
             if str(ror_value) != str(geonames_value):
-                if (key == "lat" or)
-                ror_address[key] = geonames_value
+                if (key in map_type_float()):
+                    ror_address[key] = float(geonames_value)
+                else:
+                    ror_address[key] = geonames_value
     return deepcopy(ror_address)
 
 def get_record_address(record):
