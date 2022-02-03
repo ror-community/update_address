@@ -2,6 +2,7 @@ import logging
 import requests
 import json
 from copy import deepcopy
+import sys
 
 GEONAMES = {}
 GEONAMES['USER'] = "roradmin"
@@ -9,6 +10,10 @@ GEONAMES['URL'] = 'http://api.geonames.org/getJSON'
 
 def ror_geonames_mapping():
     template = {
+      "lat": "lat",
+      "lng": "lng",
+      "country_geonames_id": "countryId",
+      "city": "name",
       "geonames_city": {
         "id": "geonameId",
         "city": "name",
@@ -24,11 +29,7 @@ def ror_geonames_mapping():
                 "ascii_name": "adminName2",
                 "code": ["countryCode","adminCode1","adminCode2"]
             }
-      },
-      "lat": "lat",
-      "lng": "lng",
-      "country_geonames_id": "countryId",
-      "city": "name"
+      }
     }
     return template
 
@@ -65,8 +66,7 @@ def compare_ror_geoname(mapped_fields,ror_address,geonames_response, original_ad
                         key_exists = False
                 if key_exists:
                     geonames_value = ".".join([geonames_response[x] for x in value])
-            else:
-                if (value in geonames_response) and (geonames_response[value] != ""):
+            elif (value in geonames_response) and (geonames_response[value] != ""):
                     geonames_value = geonames_response[value]
             if str(ror_value) != str(geonames_value):
                 original_address[key] = geonames_value
@@ -80,7 +80,7 @@ def get_record_address(record):
 
 def update_geonames(record):
     id, ror_address = get_record_address(record)
-    geonames_response = get_geonames_response(id)
+    geonames_response = get_geonames_response(id)[0]
     mapped_fields = ror_geonames_mapping()
     address = compare_ror_geoname(mapped_fields, ror_address, geonames_response, ror_address)
     record['addresses'][0] = address
