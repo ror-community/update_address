@@ -49,8 +49,19 @@ def get_geonames_response(id):
         msg = "Connection Error"
     return result,msg
 
-def map_type_float():
-    return ["lat", "lng"]
+def field_types(key):
+    types = {
+        "lat": "convert_float",
+        "lng": "convert_float",
+        "id": "convert_integer"
+    }
+    return types.get(key, None)
+    
+def convert_integer(value):
+    return int(value)
+
+def convert_float(value):
+    return float(value)
 
 def compare_ror_geoname(mapped_fields,ror_address,geonames_response, original_address):
     for key, value in mapped_fields.items():
@@ -72,8 +83,12 @@ def compare_ror_geoname(mapped_fields,ror_address,geonames_response, original_ad
             elif (value in geonames_response) and (geonames_response[value] != ""):
                     geonames_value = geonames_response[value]
             if str(ror_value) != str(geonames_value):
-                if (key in map_type_float()):
-                    ror_address[key] = float(geonames_value)
+                check_type = field_types(key)
+                if check_type:
+                    # metaprogramming below. 
+                    # The value of the dictionary is the same as the function name
+                    #globals keeps a dictionary of all symbols here and can be run as a function.
+                    ror_address[key] = globals()[check_type](geonames_value)
                 else:
                     ror_address[key] = geonames_value
     return deepcopy(ror_address)
@@ -91,3 +106,4 @@ def update_geonames(record):
     address = compare_ror_geoname(mapped_fields, ror_address, geonames_response, ror_address)
     record['addresses'][0] = address
     return record
+
