@@ -99,9 +99,12 @@ def get_record_address(record):
     id = address['geonames_city']['id']
     return id,address
 
-def update_geonames(record):
+def update_geonames(record, alt_id=None):
     id, ror_address = get_record_address(record)
-    geonames_response = get_geonames_response(id)[0]
+    if alt_id:
+        geonames_response = get_geonames_response(alt_id)[0]
+    else:
+        geonames_response = get_geonames_response(id)[0]
     mapped_fields = ror_geonames_mapping()
     address = compare_ror_geoname(mapped_fields, ror_address, geonames_response, ror_address)
     record['addresses'][0] = address
