@@ -49,7 +49,7 @@ def ror_geonames_mapping():
     return template
 
 def get_geonames_response(id):
-    # queries geonames api with the city geonames id as a query parameter
+    # queries geonames api with the location geonames id as a query parameter
     msg = None
     result = None
     query_params = {}
@@ -113,16 +113,13 @@ def compare_ror_geoname(mapped_fields,ror_address,geonames_response, original_ad
 
     return deepcopy(ror_address)
 
-def compare_countries(record, country_geonames_id):
-    geonames_response = get_geonames_response(country_geonames_id)[0]
+def compare_countries(record, geonames_response):
     geonames_country_name, geonames_country_code = geonames_response[
-        'name'], geonames_response['countryCode']
+        'countryName'], geonames_response['countryCode']
     if record['country']['country_code'] != geonames_country_code:
         record['country']['country_name'] = geonames_country_name
         record['country']['country_code'] = geonames_country_code
-        return record
-    else:
-        return record
+    return record
 
 def get_record_address(record):
     # returns the address dictionary with the geonames city id
@@ -133,12 +130,11 @@ def get_record_address(record):
 def update_geonames(record, alt_id=None):
     id, ror_address = get_record_address(record)
     if alt_id:
-        geonames_response = get_geonames_response(alt_id)[0]
-    else:
-        geonames_response = get_geonames_response(id)[0]
+        id = alt_id
+    geonames_response = get_geonames_response(id)[0]
     mapped_fields = ror_geonames_mapping()
     address = compare_ror_geoname(mapped_fields, ror_address, geonames_response, ror_address)
     record['addresses'][0] = address
-    record = compare_countries(record, geonames_response['countryId'])
+    record = compare_countries(record, geonames_response)
     return record
 
