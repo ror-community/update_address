@@ -139,6 +139,6 @@ def update_geonames(record, alt_id=None):
     mapped_fields = ror_geonames_mapping()
     address = compare_ror_geoname(mapped_fields, ror_address, geonames_response, ror_address)
     record['addresses'][0] = address
-    record = compare_countries(record)
+    record = compare_countries(record, geonames_response['countryId'])
     return record
 
