@@ -9,26 +9,41 @@ GEONAMES['USER'] = "roradmin"
 GEONAMES['URL'] = 'http://api.geonames.org/getJSON'
 
 def ror_geonames_mapping():
+    # contains either default null values or mapping to geonames response
     template = {
       "lat": "lat",
       "lng": "lng",
+      "state": None,
+      "state_code": None,
       "country_geonames_id": "countryId",
       "city": "name",
       "geonames_city": {
         "id": "geonameId",
         "city": "name",
         "geonames_admin1": {
-          "name": "adminName1",
-          "ascii_name": "adminName1",
-          "id": "adminId1",
-          "code": ["countryCode","adminCode1"]
+            "name": "adminName1",
+            "ascii_name": "adminName1",
+            "id": "adminId1",
+            "code": ["countryCode","adminCode1"]
         },
         "geonames_admin2": {
-                "name": "adminName2",
-                "id": "adminId2",
-                "ascii_name": "adminName2",
-                "code": ["countryCode","adminCode1","adminCode2"]
-            }
+            "name": "adminName2",
+            "id": "adminId2",
+            "ascii_name": "adminName2",
+            "code": ["countryCode","adminCode1","adminCode2"]
+        },
+        "nuts_level1": {
+            "name": None,
+            "code": None
+        },
+        "nuts_level2": {
+            "name": None,
+            "code": None
+        },
+        "nuts_level3": {
+            "name": None,
+            "code": None
+        }
       }
     }
     return template
@@ -53,7 +68,8 @@ def field_types(key):
     types = {
         "lat": "convert_float",
         "lng": "convert_float",
-        "id": "convert_integer"
+        "id": "convert_integer",
+        "country_geonames_id": "convert_integer"
     }
     return types.get(key, None)
     
@@ -73,7 +89,7 @@ def compare_ror_geoname(mapped_fields,ror_address,geonames_response, original_ad
         else:
             ror_value = ror_address[key] if key in ror_address else original_address[key]
             geonames_value = None
-            if (key == "code"):
+            if (key == "code" and value):
                 key_exists = True
                 for x in value:
                     if not(x in geonames_response):
@@ -82,7 +98,7 @@ def compare_ror_geoname(mapped_fields,ror_address,geonames_response, original_ad
                     geonames_value = ".".join([geonames_response[x] for x in value])
             elif (value in geonames_response) and (geonames_response[value] != ""):
                     geonames_value = geonames_response[value]
-            if str(ror_value) != str(geonames_value):
+            if ((str(ror_value) != str(geonames_value))) and geonames_value:
                 check_type = field_types(key)
                 if check_type:
                     # metaprogramming below. 
@@ -91,6 +107,10 @@ def compare_ror_geoname(mapped_fields,ror_address,geonames_response, original_ad
                     ror_address[key] = globals()[check_type](geonames_value)
                 else:
                     ror_address[key] = geonames_value
+            elif (not(value) or not(geonames_value)):
+                # if value is set to Null or there is no key present in geonames response that is mapped to the ror key. For ex: there is no geonames admin 2 information
+                ror_address[key] = None
+
     return deepcopy(ror_address)
 
 def get_record_address(record):
