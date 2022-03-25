@@ -1,8 +1,6 @@
-import logging
 import requests
 import json
 from copy import deepcopy
-import sys
 
 GEONAMES = {}
 GEONAMES['USER'] = "roradmin"
@@ -50,6 +48,7 @@ def ror_geonames_mapping():
 
 def get_geonames_response(id):
     # queries geonames api with the location geonames id as a query parameter
+    print("Fetching Geonames ID " + str(id))
     msg = None
     result = None
     query_params = {}
@@ -60,8 +59,18 @@ def get_geonames_response(id):
         response = requests.get(url,params=query_params)
         response.raise_for_status()
         result = json.loads(response.text)
-    except requests.exceptions.RequestException as e:
-        msg = "Connection Error"
+    except requests.exceptions.HTTPError as errh:
+        msg = "Http Error: " + str(errh)
+        print (msg)
+    except requests.exceptions.ConnectionError as errc:
+        msg = "Error Connecting: " + str(errc)
+        print (msg)
+    except requests.exceptions.Timeout as errt:
+        msg = "Timeout Error: " + str(errt)
+        print (msg)
+    except requests.exceptions.RequestException as err:
+        msg = "Request exception: " + str(err)
+        print (msg)
     return result,msg
 
 def field_types(key):
@@ -72,7 +81,7 @@ def field_types(key):
         "country_geonames_id": "convert_integer"
     }
     return types.get(key, None)
-    
+
 def convert_integer(value):
     return int(value)
 
@@ -97,11 +106,11 @@ def compare_ror_geoname(mapped_fields,ror_address,geonames_response, original_ad
                 if key_exists:
                     geonames_value = ".".join([geonames_response[x] for x in value])
             elif (value in geonames_response) and (geonames_response[value] != ""):
-                    geonames_value = geonames_response[value]
+                geonames_value = geonames_response[value]
             if ((str(ror_value) != str(geonames_value))) and geonames_value:
                 check_type = field_types(key)
                 if check_type:
-                    # metaprogramming below. 
+                    # metaprogramming below.
                     # The value of the dictionary is the same as the function name
                     #globals keeps a dictionary of all symbols here and can be run as a function.
                     ror_address[key] = globals()[check_type](geonames_value)
@@ -128,13 +137,16 @@ def get_record_address(record):
     return id,address
 
 def update_geonames(record, alt_id=None):
+    print("Updating Geonames info for record: " + record["id"])
     id, ror_address = get_record_address(record)
     if alt_id:
         id = alt_id
     geonames_response = get_geonames_response(id)[0]
-    mapped_fields = ror_geonames_mapping()
-    address = compare_ror_geoname(mapped_fields, ror_address, geonames_response, ror_address)
-    record['addresses'][0] = address
-    record = compare_countries(record, geonames_response)
-    return record
-
+    try:
+        mapped_fields = ror_geonames_mapping()
+        address = compare_ror_geoname(mapped_fields, ror_address, geonames_response, ror_address)
+        record['addresses'][0] = address
+        record = compare_countries(record, geonames_response)
+        return record
+    except:
+        print("Could not update Geonames ID " + str(id) + " for record " + str(record["id"]))
