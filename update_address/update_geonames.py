@@ -94,7 +94,16 @@ def compare_ror_geoname(mapped_fields,ror_address,geonames_response, original_ad
         # all key-value pairs in the nested dictionary
         if isinstance(value, dict):
             if key in ror_address:
-                compare_ror_geoname(value,ror_address[key],geonames_response, original_address)
+                # nuts_levelX values were formatted as nuts_level1: None
+                # in new records added Mar 2022 release
+                # existing records were formmated as nuts_level1: {'code': None, 'name': None}
+                # check and update empty nuts data to match existing records
+                # OK to remove when Mar 2022 records have been corrected
+                if "nuts_level" in key:
+                    if ror_address[key] is None:
+                        ror_address[key] = value
+                else:
+                    compare_ror_geoname(value,ror_address[key],geonames_response, original_address)
         else:
             ror_value = ror_address[key] if key in ror_address else original_address[key]
             geonames_value = None
