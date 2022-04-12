@@ -94,15 +94,23 @@ def compare_ror_geoname(mapped_fields,ror_address,geonames_response, original_ad
         # all key-value pairs in the nested dictionary
         if isinstance(value, dict):
             if key in ror_address:
-                # nuts_levelX values were formatted as nuts_level1: None
-                # in new records added Mar 2022 release
-                # existing records were formmated as nuts_level1: {'code': None, 'name': None}
-                # check and update empty nuts data to match existing records
+                # in new records added in Mar 2022 release empty nuts_levelX values were formatted like
+                # nuts_level1: None
+                # existing records were formatted like
+                # nuts_levelX: {'code': None, 'name': None}
+                # check and update empty nuts_levelX fields to match existing records
                 # OK to remove when Mar 2022 records have been corrected
-                if "nuts_level" in key:
-                    if ror_address[key] is None:
-                        ror_address[key] = value
+                if "nuts_level" in key and ror_address[key] is None:
+                    ror_address[key] = value
                 else:
+                    # in new records added in Mar 2022 release empty geonames_adminX values were formatted like
+                    # geonames_adminX: None
+                    # existing records were formatted like
+                    # "geonames_adminX": {"ascii_name": null,"id": null,"name": null,"code": null}
+                    # check and update empty geonames_adminX fields to match existing records
+                    # OK to remove when Mar 2022 records have been corrected
+                    if "geonames_admin" in key and ror_address[key] is None:
+                        ror_address[key] = value
                     compare_ror_geoname(value,ror_address[key],geonames_response, original_address)
         else:
             ror_value = ror_address[key] if key in ror_address else original_address[key]
