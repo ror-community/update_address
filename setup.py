@@ -5,7 +5,7 @@ here = pathlib.Path(__file__).parent.resolve()
 
 setup(
     name='update_address',
-    version='0.0.2',
+    version='0.0.1',
     long_description="For ROR Curator Use Only. This library updates the ROR address from the corresponding geonames response",
     url='https://github.com/ror-community/update_address',
     packages=["update_address"],
