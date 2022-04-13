@@ -46,6 +46,45 @@ def ror_geonames_mapping():
     }
     return template
 
+def ror_empty_address(geonames_id):
+    ror_address = {
+      "lat": None,
+      "lng": None,
+      "state": None,
+      "state_code": None,
+      "country_geonames_id": None,
+      "city": None,
+      "geonames_city": {
+        "id": geonames_id,
+        "city": None,
+        "geonames_admin1": {
+            "name": None,
+            "ascii_name": None,
+            "id": None,
+            "code": None
+        },
+        "geonames_admin2": {
+            "name": None,
+            "id": None,
+            "ascii_name": None,
+            "code": None
+        },
+        "nuts_level1": {
+            "name": None,
+            "code": None
+        },
+        "nuts_level2": {
+            "name": None,
+            "code": None
+        },
+        "nuts_level3": {
+            "name": None,
+            "code": None
+        }
+      }
+    }
+    return ror_address
+
 def get_geonames_response(id):
     # queries geonames api with the location geonames id as a query parameter
     print("Fetching Geonames ID " + str(id))
@@ -167,3 +206,14 @@ def update_geonames(record, alt_id=None):
         return record
     except:
         print("Could not update Geonames ID " + str(id) + " for record " + str(record["id"]))
+
+def new_geonames(geonames_id):
+    print("Getting Geonames info for ID: " + geonames_id)
+    geonames_response = get_geonames_response(geonames_id)[0]
+    ror_address = ror_empty_address(geonames_id)
+    try:
+        mapped_fields = ror_geonames_mapping()
+        address = compare_ror_geoname(mapped_fields, ror_address, geonames_response, ror_address)
+        return address
+    except:
+        print("Could not create ROR address for Geonames ID " + str(geonames_id))
