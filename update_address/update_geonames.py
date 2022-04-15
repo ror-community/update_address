@@ -85,6 +85,13 @@ def ror_empty_address(geonames_id):
     }
     return ror_address
 
+def ror_empty_country():
+    ror_country = {
+            "country_code": None,
+            "country_name": None,
+    }
+    return ror_country
+
 def get_geonames_response(id):
     # queries geonames api with the location geonames id as a query parameter
     print("Fetching Geonames ID " + str(id))
@@ -186,6 +193,13 @@ def compare_countries(record, geonames_response):
         record['country']['country_code'] = geonames_country_code
     return record
 
+def fill_new_country(ror_country, geonames_response):
+    geonames_country_name, geonames_country_code = geonames_response[
+        'countryName'], geonames_response['countryCode']
+    ror_country['country_name'] = geonames_country_name
+    ror_country['country_code'] = geonames_country_code
+    return ror_country
+
 def get_record_address(record):
     # returns the address dictionary with the geonames city id
     address = record['addresses'][0]
@@ -208,12 +222,17 @@ def update_geonames(record, alt_id=None):
         print("Could not update Geonames ID " + str(id) + " for record " + str(record["id"]))
 
 def new_geonames(geonames_id):
+    response = {}
     print("Getting Geonames info for ID: " + geonames_id)
     geonames_response = get_geonames_response(geonames_id)[0]
     ror_address = ror_empty_address(geonames_id)
+    ror_country = ror_empty_country()
     try:
         mapped_fields = ror_geonames_mapping()
         address = compare_ror_geoname(mapped_fields, ror_address, geonames_response, ror_address)
-        return address
+        country = fill_new_country(ror_country, geonames_response)
+        response['address'] = address
+        response['country'] = country
+        return response
     except:
         print("Could not create ROR address for Geonames ID " + str(geonames_id))
