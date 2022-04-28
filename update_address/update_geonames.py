@@ -5,6 +5,8 @@ from copy import deepcopy
 GEONAMES = {}
 GEONAMES['USER'] = "roradmin"
 GEONAMES['URL'] = 'http://api.geonames.org/getJSON'
+CONVERT_FLOAT = 'convert_float'
+CONVERT_INT = 'convert_integer'
 
 def ror_geonames_mapping():
     # contains either default null values or mapping to geonames response
@@ -119,13 +121,17 @@ def get_geonames_response(id):
         print (msg)
     return result,msg
 
-def field_types(key):
+def field_types(key, geonames_value):
     types = {
-        "lat": "convert_float",
-        "lng": "convert_float",
-        "id": "convert_integer",
-        "country_geonames_id": "convert_integer"
+        "lat": CONVERT_FLOAT,
+        "lng": CONVERT_FLOAT,
+        "id": CONVERT_INT,
+        "country_geonames_id": CONVERT_INT
     }
+    if(key == "lat" or key == "lng"):
+        if geonames_value != None and "." not in geonames_value:
+            types[key] = CONVERT_INT
+
     return types.get(key, None)
 
 def convert_integer(value):
@@ -171,11 +177,11 @@ def compare_ror_geoname(mapped_fields,ror_address,geonames_response, original_ad
             elif (value in geonames_response) and (geonames_response[value] != ""):
                 geonames_value = geonames_response[value]
             if ((str(ror_value) != str(geonames_value))) and geonames_value:
-                check_type = field_types(key)
+                check_type = field_types(key, geonames_value)
                 if check_type:
                     # metaprogramming below.
                     # The value of the dictionary is the same as the function name
-                    #globals keeps a dictionary of all symbols here and can be run as a function.
+                    # globals keeps a dictionary of all symbols here and can be run as a function.
                     ror_address[key] = globals()[check_type](geonames_value)
                 else:
                     ror_address[key] = geonames_value
