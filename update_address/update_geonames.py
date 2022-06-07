@@ -197,6 +197,8 @@ def compare_countries(record, geonames_response):
     if record['country']['country_code'] != geonames_country_code:
         record['country']['country_name'] = geonames_country_name
         record['country']['country_code'] = geonames_country_code
+    elif record['country']['country_code'] == geonames_country_code and record['country']['country_name'] != geonames_country_name:
+        record['country']['country_name'] = geonames_country_name
     return record
 
 def fill_new_country(ror_country, geonames_response):
