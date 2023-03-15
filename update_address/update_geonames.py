@@ -7,6 +7,7 @@ GEONAMES['USER'] = "roradmin"
 GEONAMES['URL'] = 'http://api.geonames.org/getJSON'
 CONVERT_FLOAT = 'convert_float'
 CONVERT_INT = 'convert_integer'
+RESPONSE_CACHE = {}
 
 def ror_geonames_mapping():
     # contains either default null values or mapping to geonames response
@@ -95,30 +96,35 @@ def ror_empty_country():
     return ror_country
 
 def get_geonames_response(id):
-    # queries geonames api with the location geonames id as a query parameter
     print("Fetching Geonames ID " + str(id))
+    # queries geonames api with the location geonames id as a query parameter
     msg = None
     result = None
     query_params = {}
     query_params['geonameId'] = id
     query_params['username'] = GEONAMES['USER']
     url = GEONAMES['URL']
-    try:
-        response = requests.get(url,params=query_params)
-        response.raise_for_status()
-        result = json.loads(response.text)
-    except requests.exceptions.HTTPError as errh:
-        msg = "Http Error: " + str(errh)
-        print (msg)
-    except requests.exceptions.ConnectionError as errc:
-        msg = "Error Connecting: " + str(errc)
-        print (msg)
-    except requests.exceptions.Timeout as errt:
-        msg = "Timeout Error: " + str(errt)
-        print (msg)
-    except requests.exceptions.RequestException as err:
-        msg = "Request exception: " + str(err)
-        print (msg)
+    if id in RESPONSE_CACHE:
+        result = RESPONSE_CACHE[id]
+    else:
+        try:
+            response = requests.get(url,params=query_params)
+            response.raise_for_status()
+            result = json.loads(response.text)
+            RESPONSE_CACHE[id] = result
+        except requests.exceptions.HTTPError as errh:
+            msg = "Http Error: " + str(errh)
+            print (msg)
+        except requests.exceptions.ConnectionError as errc:
+            msg = "Error Connecting: " + str(errc)
+            print (msg)
+        except requests.exceptions.Timeout as errt:
+            msg = "Timeout Error: " + str(errt)
+            print (msg)
+        except requests.exceptions.RequestException as err:
+            msg = "Request exception: " + str(err)
+            print (msg)
+
     return result,msg
 
 def field_types(key, geonames_value):
