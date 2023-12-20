@@ -104,7 +104,7 @@ def ror_empty_address(geonames_id):
 
 def ror_empty_location_v2(geonames_id):
     ror_address = {
-      "geonames_id": geonames_id,
+      "geonames_id": convert_integer(geonames_id),
       "geonames_details": {
         "name": None,
         "lat": None,
