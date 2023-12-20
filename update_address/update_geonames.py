@@ -57,8 +57,8 @@ def ror_geonames_mapping_v2():
         "name": "name",
         "lat": "lat",
         "lng": "lng",
-        "country_code": "countryName",
-        "country_name": "countryCode",
+        "country_name": "countryName",
+        "country_code": "countryCode",
       }
     }
     return template
@@ -331,3 +331,17 @@ def new_geonames_v2(geonames_id):
         return response
     except:
         print("Could not create ROR address for Geonames ID " + str(geonames_id))
+
+def main():
+    #location = new_geonames_v2("2661552")
+    #print(location)
+
+    with open('/Users/ekrznarich/git/validation-suite/tests/fixtures/v2/valid/00wz65j53.json', 'r') as f:
+        data = json.load(f)
+
+    updated_record = update_geonames_v2(data)
+    print(updated_record)
+
+if __name__ == "__main__":
+    main()
+
