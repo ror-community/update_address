@@ -49,6 +49,20 @@ def ror_geonames_mapping():
     }
     return template
 
+def ror_geonames_mapping_v2():
+    # contains either default null values or mapping to geonames response
+    template = {
+      "geonames_id": "geonameId",
+      "geonames_details": {
+        "name": "name",
+        "lat": "lat",
+        "lng": "lng",
+        "country_code": "countryName",
+        "country_name": "countryCode",
+      }
+    }
+    return template
+
 def ror_empty_address(geonames_id):
     ror_address = {
       "lat": None,
@@ -84,6 +98,19 @@ def ror_empty_address(geonames_id):
             "name": None,
             "code": None
         }
+      }
+    }
+    return ror_address
+
+def ror_empty_location_v2(geonames_id):
+    ror_address = {
+      "geonames_id": geonames_id,
+      "geonames_details": {
+        "name": None,
+        "lat": None,
+        "lng": None,
+        "country_code": None,
+        "country_name": None
       }
     }
     return ror_address
@@ -197,6 +224,33 @@ def compare_ror_geoname(mapped_fields,ror_address,geonames_response, original_ad
 
     return deepcopy(ror_address)
 
+def compare_ror_geoname_v2(mapped_fields,ror_location,geonames_response,original_location):
+    for key, value in mapped_fields.items():
+        # If value is of dict type then print
+        # all key-value pairs in the nested dictionary
+        if isinstance(value, dict):
+            if key in ror_location:
+                compare_ror_geoname(value,ror_location[key],geonames_response,original_location)
+        else:
+            ror_value = ror_location[key] if key in ror_location else original_location[key]
+            geonames_value = None
+            if (value in geonames_response) and (geonames_response[value] != ""):
+                geonames_value = geonames_response[value]
+            if ((str(ror_value) != str(geonames_value))) and geonames_value:
+                check_type = field_types(key, geonames_value)
+                if check_type:
+                    # metaprogramming below.
+                    # The value of the dictionary is the same as the function name
+                    # globals keeps a dictionary of all symbols here and can be run as a function.
+                    ror_location[key] = globals()[check_type](geonames_value)
+                else:
+                    ror_location[key] = geonames_value
+            elif (not(value) or not(geonames_value)):
+                # if value is set to Null or there is no key present in geonames response that is mapped to the ror key. For ex: there is no geonames admin 2 information
+                ror_location[key] = None
+
+    return deepcopy(ror_location)
+
 def compare_countries(record, geonames_response):
     geonames_country_name, geonames_country_code = geonames_response[
         'countryName'], geonames_response['countryCode']
@@ -235,6 +289,20 @@ def update_geonames(record, alt_id=None):
     except:
         print("Could not update Geonames ID " + str(id) + " for record " + str(record["id"]))
 
+def update_geonames_v2(record, alt_id=None):
+    print("Updating Geonames info for record: " + record["id"])
+    updated_locations = []
+    mapped_fields = ror_geonames_mapping_v2()
+    try:
+        for location in record['locations']:
+            geonames_response = get_geonames_response(location['geonames_id'])[0]
+            updated_location = compare_ror_geoname(mapped_fields, location, geonames_response, location)
+            updated_locations.append(updated_location)
+        record['locations'] = deepcopy(updated_locations)
+        return record
+    except:
+        print("Could not update Geonames ID " + str(id) + " for record " + str(record["id"]))
+
 def new_geonames(geonames_id):
     response = {}
     print("Getting Geonames info for ID: " + geonames_id)
@@ -247,6 +315,19 @@ def new_geonames(geonames_id):
         country = fill_new_country(ror_country, geonames_response)
         response['address'] = address
         response['country'] = country
+        return response
+    except:
+        print("Could not create ROR address for Geonames ID " + str(geonames_id))
+
+def new_geonames_v2(geonames_id):
+    response = {}
+    print("Getting Geonames info for ID: " + geonames_id)
+    geonames_response = get_geonames_response(geonames_id)[0]
+    ror_location = ror_empty_location_v2(geonames_id)
+    try:
+        mapped_fields = ror_geonames_mapping_v2()
+        location = compare_ror_geoname_v2(mapped_fields, ror_location, geonames_response, ror_location)
+        response['location'] = location
         return response
     except:
         print("Could not create ROR address for Geonames ID " + str(geonames_id))
