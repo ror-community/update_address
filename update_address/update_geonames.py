@@ -296,7 +296,11 @@ def update_geonames_v2(record, alt_id=None):
     try:
         for location in record['locations']:
             geonames_response = get_geonames_response(location['geonames_id'])[0]
+            print("Geonames response:")
+            print(geonames_response)
             updated_location = compare_ror_geoname(mapped_fields, location, geonames_response, location)
+            print("Updated location:")
+            print(updated_location)
             updated_locations.append(updated_location)
         record['locations'] = deepcopy(updated_locations)
         return record
