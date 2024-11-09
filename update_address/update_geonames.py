@@ -271,28 +271,6 @@ def compare_ror_geoname_v2(mapped_fields,ror_location,geonames_response,original
                 ror_location[key] = None
     return deepcopy(ror_location)
 
-def compare_ror_geoname_v2(mapped_fields,ror_address,geonames_response,msg={}):
-    for key, value in mapped_fields.items():
-        # If value is of dict type then print
-        # all key-value pairs in the nested dictionary
-        if isinstance(value, dict):
-            if key in ror_address:
-                compare_ror_geoname_v2(value,ror_address[key],geonames_response,compare)
-        else:
-            ror_value = ror_address[key] if key in ror_address else original_address[key]
-            geonames_value = None
-            if key == 'country_subdivision_code':
-                if value[0] in geonames_response:
-                    if geonames_response[value[0]][value[1]] != "":
-                        geonames_value = geonames_response[value[0]][value[1]]
-            else:
-                if (value in geonames_response) and (geonames_response[value] != ""):
-                    geonames_value = geonames_response[value]
-            if str(ror_value) != str(geonames_value):
-                compare[key] = {"ror": ror_value, "geonames": geonames_value}
-    return deepcopy(compare)
-
-
 def compare_countries(record, geonames_response):
     geonames_country_name, geonames_country_code = geonames_response[
         'countryName'], geonames_response['countryCode']
