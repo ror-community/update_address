@@ -337,19 +337,23 @@ def update_geonames_v2(record, alt_id=None):
     mapped_fields = ror_geonames_mapping_v2()
     try:
         for location in record['locations']:
-            geonames_response = get_geonames_response(location['geonames_id'])[0]
-            print("Geonames response:")
-            print(geonames_response)
-            updated_location = compare_ror_geoname(mapped_fields, location, geonames_response, location)
-            if updated_location['geonames_details']['continent_code']:
-                updated_location['geonames_details']['continent_name'] = CONTINENT_CODES_NAMES[updated_location['geonames_details']['continent_code']]
-            print("Updated location:")
-            print(updated_location)
-            updated_locations.append(updated_location)
+            try:
+                geonames_response = get_geonames_response(location['geonames_id'])[0]
+                print("Geonames response:")
+                print(geonames_response)
+                updated_location = compare_ror_geoname(mapped_fields, location, geonames_response, location)
+                if updated_location['geonames_details']['continent_code']:
+                    updated_location['geonames_details']['continent_name'] = CONTINENT_CODES_NAMES[updated_location['geonames_details']['continent_code']]
+                print("Updated location:")
+                print(updated_location)
+                updated_locations.append(updated_location)
+            except:
+                print("Could not update Geonames ID " + location['geonames_id'] + " for record " + str(record["id"]))
+
         record['locations'] = deepcopy(updated_locations)
         return record
     except:
-        print("Could not update Geonames ID " + str(id) + " for record " + str(record["id"]))
+        print("Could not update locations for record " + str(record["id"]))
 
 def new_geonames(geonames_id):
     response = {}
