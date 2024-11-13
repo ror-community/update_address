@@ -17,6 +17,7 @@ CONTINENT_CODES_NAMES = {
     "OC": "Oceania",
     "SA": "South America"
 }
+NEW_V2_1_FIELDS = ('continent_code', 'continent_name', 'country_subdivision_code', 'country_subdivision_name')
 
 def ror_geonames_mapping():
     # contains either default null values or mapping to geonames response
@@ -248,7 +249,10 @@ def compare_ror_geoname_v2(mapped_fields,ror_location,geonames_response,original
             if key in ror_location:
                 compare_ror_geoname_v2(value,ror_location[key],geonames_response,original_location)
         else:
-            ror_value = ror_location[key] if key in ror_location else original_location[key]
+            if key in NEW_V2_1_FIELDS:
+                ror_value = None
+            else:
+                ror_value = ror_location[key] if key in ror_location else original_location[key]
             geonames_value = None
             if key == 'country_subdivision_code':
                 if value[0] in geonames_response:
