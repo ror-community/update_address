@@ -319,7 +319,7 @@ def update_geonames_v2(record, alt_id=None):
         geonames_response = get_geonames_response(location['geonames_id'])[0]
         print("Geonames response:")
         print(geonames_response)
-        updated_location = compare_ror_geoname(mapped_fields, location, geonames_response, location)
+        updated_location = compare_ror_geoname_v2(mapped_fields, location, geonames_response, location)
         if updated_location['geonames_details']['continent_code']:
             updated_location['geonames_details']['continent_name'] = CONTINENT_CODES_NAMES[updated_location['geonames_details']['continent_code']]
         print("Updated location:")
