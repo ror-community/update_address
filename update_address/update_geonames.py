@@ -246,7 +246,7 @@ def compare_ror_geoname_v2(mapped_fields,ror_location,geonames_response,original
         # all key-value pairs in the nested dictionary
         if isinstance(value, dict):
             if key in ror_location:
-                compare_ror_geoname(value,ror_location[key],geonames_response,original_location)
+                compare_ror_geoname_v2(value,ror_location[key],geonames_response,original_location)
         else:
             ror_value = ror_location[key] if key in ror_location else original_location[key]
             geonames_value = None
