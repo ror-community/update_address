@@ -17,7 +17,12 @@ CONTINENT_CODES_NAMES = {
     "OC": "Oceania",
     "SA": "South America"
 }
-NEW_V2_1_FIELDS = ('continent_code', 'continent_name', 'country_subdivision_code', 'country_subdivision_name')
+NEW_V2_1_FIELDS = (
+    'continent_code',
+    'continent_name',
+    'country_subdivision_code',
+    'country_subdivision_name'
+)
 
 def ror_geonames_mapping():
     # contains either default null values or mapping to geonames response
@@ -328,6 +333,8 @@ def update_geonames_v2(record, alt_id=None):
             updated_location['geonames_details']['continent_name'] = CONTINENT_CODES_NAMES[updated_location['geonames_details']['continent_code']]
         print("Updated location:")
         print(updated_location)
+        sorted_geonames_details = dict(sorted(updated_location['geonames_details'].items()))
+        updated_locations['geonames_details'] = sorted_geonames_details
         updated_locations.append(updated_location)
             #except:
             #    print("Could not update Geonames ID " + location['geonames_id'] + " for record " + str(record["id"]))
