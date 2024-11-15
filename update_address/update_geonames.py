@@ -334,7 +334,7 @@ def update_geonames_v2(record, alt_id=None):
         print("Updated location:")
         print(updated_location)
         sorted_geonames_details = dict(sorted(updated_location['geonames_details'].items()))
-        updated_locations['geonames_details'] = sorted_geonames_details
+        updated_location['geonames_details'] = sorted_geonames_details
         updated_locations.append(updated_location)
             #except:
             #    print("Could not update Geonames ID " + location['geonames_id'] + " for record " + str(record["id"]))
