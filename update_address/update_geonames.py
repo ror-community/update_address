@@ -147,6 +147,7 @@ def ror_empty_country():
 def get_geonames_response(id):
     print("Fetching Geonames ID " + str(id))
     # queries geonames api with the location geonames id as a query parameter
+    cache_hit = False
     msg = None
     result = None
     query_params = {}
@@ -155,6 +156,7 @@ def get_geonames_response(id):
     url = GEONAMES['URL']
     if id in RESPONSE_CACHE:
         result = RESPONSE_CACHE[id]
+        cache_hit = True
     else:
         try:
             response = requests.get(url,params=query_params)
@@ -174,7 +176,7 @@ def get_geonames_response(id):
             msg = "Request exception: " + str(err)
             print (msg)
 
-    return result,msg
+    return result,msg,cache_hit
 
 def field_types(key, geonames_value):
     types = {
@@ -308,7 +310,7 @@ def update_geonames(record, alt_id=None):
     id, ror_address = get_record_address(record)
     if alt_id:
         id = alt_id
-    geonames_response = get_geonames_response(id)[0]
+    geonames_response,msg,cache_hit  = get_geonames_response(id)
     try:
         mapped_fields = ror_geonames_mapping()
         address = compare_ror_geoname(mapped_fields, ror_address, geonames_response, ror_address)
@@ -347,7 +349,7 @@ def update_geonames_v2(record, alt_id=None):
 def new_geonames(geonames_id):
     response = {}
     print("Getting Geonames info for ID: " + geonames_id)
-    geonames_response = get_geonames_response(geonames_id)[0]
+    geonames_response,msg,cache_hit = get_geonames_response(geonames_id)
     ror_address = ror_empty_address(geonames_id)
     ror_country = ror_empty_country()
     try:
@@ -363,7 +365,7 @@ def new_geonames(geonames_id):
 def new_geonames_v2(geonames_id):
     response = {}
     print("Getting Geonames info for ID: " + geonames_id)
-    geonames_response = get_geonames_response(geonames_id)[0]
+    geonames_response,msg,cache_hit = get_geonames_response(geonames_id)
     ror_location = ror_empty_location_v2(geonames_id)
     try:
         mapped_fields = ror_geonames_mapping_v2()
