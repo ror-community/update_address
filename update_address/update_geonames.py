@@ -306,6 +306,7 @@ def get_record_address(record):
     return id,address
 
 def update_geonames(record, alt_id=None):
+    cache_hit = False
     print("Updating Geonames info for record: " + record["id"])
     id, ror_address = get_record_address(record)
     if alt_id:
@@ -321,6 +322,7 @@ def update_geonames(record, alt_id=None):
         print("Could not update Geonames ID " + str(id) + " for record " + str(record["id"]))
 
 def update_geonames_v2(record, alt_id=None):
+    cache_hit = False
     print("Updating Geonames info for record: " + record["id"])
     updated_locations = []
     mapped_fields = ror_geonames_mapping_v2()
