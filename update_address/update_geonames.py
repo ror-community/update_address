@@ -316,7 +316,7 @@ def update_geonames(record, alt_id=None):
         address = compare_ror_geoname(mapped_fields, ror_address, geonames_response, ror_address)
         record['addresses'][0] = address
         record = compare_countries(record, geonames_response)
-        return record
+        return record,cache_hit
     except:
         print("Could not update Geonames ID " + str(id) + " for record " + str(record["id"]))
 
@@ -327,7 +327,7 @@ def update_geonames_v2(record, alt_id=None):
     #try:
     for location in record['locations']:
         #try:
-        geonames_response = get_geonames_response(location['geonames_id'])[0]
+        geonames_response,msg,cache_hit= get_geonames_response(location['geonames_id'])
         print("Geonames response:")
         print(geonames_response)
         updated_location = compare_ror_geoname_v2(mapped_fields, location, geonames_response, location)
@@ -342,7 +342,7 @@ def update_geonames_v2(record, alt_id=None):
             #    print("Could not update Geonames ID " + location['geonames_id'] + " for record " + str(record["id"]))
 
     record['locations'] = deepcopy(updated_locations)
-    return record
+    return record,cache_hit
     #except:
     #    print("Could not update locations for record " + str(record["id"]))
 
