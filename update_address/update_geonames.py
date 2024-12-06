@@ -1,13 +1,14 @@
 import requests
 import json
 from copy import deepcopy
+import geonames_cache
 
 GEONAMES = {}
 GEONAMES['USER'] = "roradmin"
 GEONAMES['URL'] = 'http://api.geonames.org/getJSON'
 CONVERT_FLOAT = 'convert_float'
 CONVERT_INT = 'convert_integer'
-RESPONSE_CACHE = {}
+RESPONSE_CACHE = geonames_cache.RESPONSE_CACHE
 CONTINENT_CODES_NAMES = {
     "AF": "Africa",
     "AN": "Antarctica",
@@ -154,8 +155,8 @@ def get_geonames_response(id):
     query_params['geonameId'] = id
     query_params['username'] = GEONAMES['USER']
     url = GEONAMES['URL']
-    if id in RESPONSE_CACHE:
-        result = RESPONSE_CACHE[id]
+    if str(id) in RESPONSE_CACHE:
+        result = RESPONSE_CACHE[str(id)]
         cache_hit = True
     else:
         try:
@@ -313,14 +314,15 @@ def update_geonames(record, alt_id=None):
     if alt_id:
         id = alt_id
     geonames_response,msg,cache_hit  = get_geonames_response(id)
-    try:
-        mapped_fields = ror_geonames_mapping()
-        address = compare_ror_geoname(mapped_fields, ror_address, geonames_response, ror_address)
-        record['addresses'][0] = address
-        record = compare_countries(record, geonames_response)
-        return record,cache_hit
-    except:
-        print("Could not update Geonames ID " + str(id) + " for record " + str(record["id"]))
+    if geonames_response:
+        try:
+            mapped_fields = ror_geonames_mapping()
+            address = compare_ror_geoname(mapped_fields, ror_address, geonames_response, ror_address)
+            record['addresses'][0] = address
+            record = compare_countries(record, geonames_response)
+            return record,cache_hit
+        except:
+            print("Could not update Geonames ID " + str(id) + " for record " + str(record["id"]))
 
 def update_geonames_v2(record, alt_id=None):
     cache_hit = False
@@ -329,20 +331,20 @@ def update_geonames_v2(record, alt_id=None):
     mapped_fields = ror_geonames_mapping_v2()
     #try:
     for location in record['locations']:
-        #try:
-        geonames_response,msg,cache_hit= get_geonames_response(location['geonames_id'])
-        print("Geonames response:")
-        print(geonames_response)
-        updated_location = compare_ror_geoname_v2(mapped_fields, location, geonames_response, location)
-        if updated_location['geonames_details']['continent_code']:
-            updated_location['geonames_details']['continent_name'] = CONTINENT_CODES_NAMES[updated_location['geonames_details']['continent_code']]
-        print("Updated location:")
-        print(updated_location)
-        sorted_geonames_details = dict(sorted(updated_location['geonames_details'].items()))
-        updated_location['geonames_details'] = sorted_geonames_details
-        updated_locations.append(updated_location)
-            #except:
-            #    print("Could not update Geonames ID " + location['geonames_id'] + " for record " + str(record["id"]))
+        try:
+            geonames_response,msg,cache_hit= get_geonames_response(location['geonames_id'])
+            print("Geonames response:")
+            print(geonames_response)
+            updated_location = compare_ror_geoname_v2(mapped_fields, location, geonames_response, location)
+            if updated_location['geonames_details']['continent_code']:
+                updated_location['geonames_details']['continent_name'] = CONTINENT_CODES_NAMES[updated_location['geonames_details']['continent_code']]
+            print("Updated location:")
+            print(updated_location)
+            sorted_geonames_details = dict(sorted(updated_location['geonames_details'].items()))
+            updated_location['geonames_details'] = sorted_geonames_details
+            updated_locations.append(updated_location)
+        except:
+            print("Could not update Geonames ID " + location['geonames_id'] + " for record " + str(record["id"]))
 
     record['locations'] = deepcopy(updated_locations)
     return record,cache_hit
