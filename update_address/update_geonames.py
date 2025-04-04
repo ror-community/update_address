@@ -8,6 +8,21 @@ GEONAMES['URL'] = 'http://api.geonames.org/getJSON'
 CONVERT_FLOAT = 'convert_float'
 CONVERT_INT = 'convert_integer'
 RESPONSE_CACHE = {}
+CONTINENT_CODES_NAMES = {
+    "AF": "Africa",
+    "AN": "Antarctica",
+    "AS": "Asia",
+    "EU": "Europe",
+    "NA": "North America",
+    "OC": "Oceania",
+    "SA": "South America"
+}
+NEW_V2_1_FIELDS = (
+    'continent_code',
+    'continent_name',
+    'country_subdivision_code',
+    'country_subdivision_name'
+)
 
 def ror_geonames_mapping():
     # contains either default null values or mapping to geonames response
@@ -54,11 +69,14 @@ def ror_geonames_mapping_v2():
     template = {
       "geonames_id": "geonameId",
       "geonames_details": {
-        "name": "name",
-        "lat": "lat",
-        "lng": "lng",
-        "country_name": "countryName",
-        "country_code": "countryCode",
+            "continent_code": "continentCode",
+            "country_code": "countryCode",
+            "country_name": "countryName",
+            "country_subdivision_code": ["adminCodes1", "ISO3166_2"],
+            "country_subdivision_name": "adminName1",
+            "lat": "lat",
+            "lng": "lng",
+            "name": "name"
       }
     }
     return template
@@ -106,11 +124,15 @@ def ror_empty_location_v2(geonames_id):
     ror_address = {
       "geonames_id": convert_integer(geonames_id),
       "geonames_details": {
-        "name": None,
+        "continent_code": None,
+        "continent_name": None,
+        "country_code": None,
+        "country_name": None,
+        "country_subdivision_code": None,
+        "country_subdivision_name": None,
         "lat": None,
         "lng": None,
-        "country_code": None,
-        "country_name": None
+        "name": None
       }
     }
     return ror_address
@@ -230,12 +252,21 @@ def compare_ror_geoname_v2(mapped_fields,ror_location,geonames_response,original
         # all key-value pairs in the nested dictionary
         if isinstance(value, dict):
             if key in ror_location:
-                compare_ror_geoname(value,ror_location[key],geonames_response,original_location)
+                compare_ror_geoname_v2(value,ror_location[key],geonames_response,original_location)
         else:
-            ror_value = ror_location[key] if key in ror_location else original_location[key]
+            if key in NEW_V2_1_FIELDS:
+                ror_value = None
+            else:
+                ror_value = ror_location[key] if key in ror_location else original_location[key]
             geonames_value = None
-            if (value in geonames_response) and (geonames_response[value] != ""):
-                geonames_value = geonames_response[value]
+            if key == 'country_subdivision_code':
+                if value[0] in geonames_response:
+                    if value[1] in geonames_response[value[0]]:
+                        if geonames_response[value[0]][value[1]] != "":
+                            geonames_value = geonames_response[value[0]][value[1]]
+            else:
+                if (value in geonames_response) and (geonames_response[value] != ""):
+                    geonames_value = geonames_response[value]
             if ((str(ror_value) != str(geonames_value))) and geonames_value:
                 check_type = field_types(key, geonames_value)
                 if check_type:
@@ -248,7 +279,6 @@ def compare_ror_geoname_v2(mapped_fields,ror_location,geonames_response,original
             elif (not(value) or not(geonames_value)):
                 # if value is set to Null or there is no key present in geonames response that is mapped to the ror key. For ex: there is no geonames admin 2 information
                 ror_location[key] = None
-
     return deepcopy(ror_location)
 
 def compare_countries(record, geonames_response):
@@ -295,17 +325,25 @@ def update_geonames_v2(record, alt_id=None):
     mapped_fields = ror_geonames_mapping_v2()
     try:
         for location in record['locations']:
-            geonames_response = get_geonames_response(location['geonames_id'])[0]
-            print("Geonames response:")
-            print(geonames_response)
-            updated_location = compare_ror_geoname(mapped_fields, location, geonames_response, location)
-            print("Updated location:")
-            print(updated_location)
-            updated_locations.append(updated_location)
+            try:
+                geonames_response = get_geonames_response(location['geonames_id'])[0]
+                print("Geonames response:")
+                print(geonames_response)
+                updated_location = compare_ror_geoname_v2(mapped_fields, location, geonames_response, location)
+                if updated_location['geonames_details']['continent_code']:
+                    updated_location['geonames_details']['continent_name'] = CONTINENT_CODES_NAMES[updated_location['geonames_details']['continent_code']]
+                print("Updated location:")
+                print(updated_location)
+                sorted_geonames_details = dict(sorted(updated_location['geonames_details'].items()))
+                updated_location['geonames_details'] = sorted_geonames_details
+                updated_locations.append(updated_location)
+            except:
+                print("Could not update Geonames ID " + location['geonames_id'] + " for record " + str(record["id"]))
+
         record['locations'] = deepcopy(updated_locations)
         return record
     except:
-        print("Could not update Geonames ID " + str(id) + " for record " + str(record["id"]))
+        print("Could not update locations for record " + str(record["id"]))
 
 def new_geonames(geonames_id):
     response = {}
@@ -331,6 +369,8 @@ def new_geonames_v2(geonames_id):
     try:
         mapped_fields = ror_geonames_mapping_v2()
         location = compare_ror_geoname_v2(mapped_fields, ror_location, geonames_response, ror_location)
+        if location['geonames_details']['continent_code']:
+            location['geonames_details']['continent_name'] = CONTINENT_CODES_NAMES[location['geonames_details']['continent_code']]
         response['location'] = location
         return response
     except:
